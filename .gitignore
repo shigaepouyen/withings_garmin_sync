@@ -1,0 +1,16 @@
+# Secrets et credentials
+.withings_garmin_sync.env
+last_refresh_token.txt
+
+# État runtime
+.withings_garmin_sync_state.json
+
+# Logs
+logs/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc

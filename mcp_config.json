@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "garmin": {
+      "command": "npx",
+      "args": ["-y", "@nicolasvegam/garmin-connect-mcp"]
+    },
+    "withings": {
+      "command": "python3",
+      "args": ["withings_mcp.py"]
+    }
+  }
+}

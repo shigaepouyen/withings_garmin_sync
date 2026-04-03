@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jc.withings-garmin-sync</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>__RUN_SCRIPT__</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__WORKDIR__</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <string>__HOUR__</string>
+    <key>Minute</key>
+    <string>__MINUTE__</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>__STDOUT__</string>
+
+  <key>StandardErrorPath</key>
+  <string>__STDERR__</string>
+</dict>
+</plist>
