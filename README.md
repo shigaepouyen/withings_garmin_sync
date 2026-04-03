@@ -4,6 +4,10 @@ Synchronise automatiquement les pesées Withings vers Garmin Connect.
 
 Le projet est autonome : tous les fichiers nécessaires sont dans ce dossier.
 
+## Dépendances externes
+
+- **[nicolasvegam/garmin-connect-mcp](https://github.com/nicolasvegam/garmin-connect-mcp)** — serveur MCP Garmin utilisé pour lire et écrire les pesées dans Garmin Connect. Lancé automatiquement via `npx` à chaque sync.
+
 ## Fichiers
 
 | Fichier | Rôle |
