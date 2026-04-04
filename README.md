@@ -4,9 +4,14 @@ Synchronise automatiquement les pesées Withings vers Garmin Connect.
 
 Le projet est autonome : tous les fichiers nécessaires sont dans ce dossier.
 
-## Dépendances externes
+## Dépendances
 
-- **[nicolasvegam/garmin-connect-mcp](https://github.com/nicolasvegam/garmin-connect-mcp)** — serveur MCP Garmin utilisé pour lire et écrire les pesées dans Garmin Connect. Lancé automatiquement via `npx` à chaque sync.
+- **Python 3** avec le paquet [`garminconnect`](https://github.com/cyberjunky/python-garminconnect)
+- Accès aux APIs Withings (OAuth) et Garmin Connect (email/password)
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Fichiers
 
@@ -14,11 +19,11 @@ Le projet est autonome : tous les fichiers nécessaires sont dans ce dossier.
 |---|---|
 | `sync_withings_to_garmin.py` | Compare Withings et Garmin, importe les jours manquants |
 | `withings_mcp.py` | Récupère les pesées depuis l'API Withings |
-| `run_withings_garmin_sync.sh` | Point d'entrée : charge l'env, fixe le PATH, lance la synchro |
+| `run_withings_garmin_sync.sh` | Point d'entrée : charge l'env et lance la synchro |
 | `install_withings_garmin_launchagent.sh` | Installe l'automatisation macOS (LaunchAgent) |
 | `uninstall_withings_garmin_launchagent.sh` | Supprime le LaunchAgent |
 | `launchagents/com.jc.withings-garmin-sync.plist.template` | Template du LaunchAgent |
-| `mcp_config.json` | Config du serveur MCP Garmin |
+| `requirements.txt` | Dépendances Python |
 | `.withings_garmin_sync.env.example` | Modèle pour le fichier de secrets |
 
 Fichiers **non versionnés** (voir `.gitignore`) :
@@ -29,7 +34,13 @@ Fichiers **non versionnés** (voir `.gitignore`) :
 
 ## Installation
 
-### 1. Récupérer le token Withings initial
+### 1. Installer les dépendances Python
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Récupérer le token Withings initial
 
 Obtenir un `refresh_token` Withings via OAuth et le placer dans :
 
@@ -39,7 +50,7 @@ echo "ton_refresh_token_initial" > last_refresh_token.txt
 
 Le token est renouvelé automatiquement à chaque sync.
 
-### 2. Créer le fichier de secrets
+### 3. Créer le fichier de secrets
 
 ```bash
 cp .withings_garmin_sync.env.example .withings_garmin_sync.env
@@ -51,12 +62,6 @@ Renseigner les credentials Garmin :
 GARMIN_EMAIL="ton@email.com"
 GARMIN_PASSWORD="ton_mot_de_passe"
 ```
-
-### 3. Vérifier les dépendances
-
-- `python3` disponible dans le PATH
-- `npx` disponible (Node.js installé)
-- Paquets Python : aucun requis (stdlib uniquement)
 
 ### 4. Installer l'automatisation macOS
 
@@ -90,13 +95,13 @@ Suppression :
 Test à blanc :
 
 ```bash
-python3 sync_withings_to_garmin.py --dry-run
+./run_withings_garmin_sync.sh --dry-run
 ```
 
 Test à blanc avec logs détaillés :
 
 ```bash
-python3 sync_withings_to_garmin.py --dry-run --verbose
+./run_withings_garmin_sync.sh --dry-run --verbose
 ```
 
 Synchro réelle :
@@ -108,7 +113,7 @@ Synchro réelle :
 Rattrapage sur une période :
 
 ```bash
-python3 sync_withings_to_garmin.py --start-date 2026-01-01 --end-date 2026-12-31
+./run_withings_garmin_sync.sh --start-date 2026-01-01 --end-date 2026-12-31
 ```
 
 ## Logique de synchro
@@ -125,15 +130,7 @@ logs/withings_garmin_sync.out.log
 logs/withings_garmin_sync.err.log
 ```
 
-Pour capturer les logs d'un run manuel :
-
-```bash
-./run_withings_garmin_sync.sh --dry-run --verbose > logs/manual_sync.out.log 2> logs/manual_sync.err.log
-```
-
-## Note macOS — PATH et LaunchAgent
-
-Les LaunchAgents macOS s'exécutent avec un PATH minimal. Le script `run_withings_garmin_sync.sh` exporte explicitement le chemin vers `node`/`npx` (NVM). Si tu utilises une version de Node différente, mettre à jour la ligne `export PATH=...` dans ce fichier.
+## Note macOS — LaunchAgent
 
 Le dossier du projet **ne doit pas être dans `~/Documents`** — macOS restreint l'accès aux dossiers utilisateur (TCC) pour les processus en arrière-plan. Placer le projet dans `~/<nom-du-dossier>` directement.
 
@@ -143,5 +140,4 @@ Le dossier du projet **ne doit pas être dans `~/Documents`** — macOS restrein
 |---|---|---|
 | `can't open input file` | Projet dans `~/Documents`, restriction TCC | Déplacer hors de `~/Documents` |
 | `invalid refresh_token` | Token expiré ou fichier absent | Renouveler via OAuth Withings |
-| `node: No such file or directory` | PATH NVM absent sous launchd | Mettre à jour `export PATH=...` dans `run_withings_garmin_sync.sh` |
 | Erreur auth Garmin | Mauvais credentials | Vérifier `.withings_garmin_sync.env` |
