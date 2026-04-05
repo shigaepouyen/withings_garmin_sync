@@ -5,7 +5,7 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from garminconnect import Garmin
+from garmin_auth import GarminAuth
 from withings_mcp import fetch_weight_measurements
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -91,15 +91,16 @@ def get_garmin_client(verbose):
     password = os.environ.get("GARMIN_PASSWORD")
     if not email or not password:
         raise RuntimeError("GARMIN_EMAIL et GARMIN_PASSWORD requis dans l'environnement")
-    log_verbose(verbose, "Connexion à Garmin Connect")
-    client = Garmin(email, password)
-    client.login()
+    client = GarminAuth(email, password)
+    log_verbose(verbose, "Authentification Garmin (OAuth1/OAuth2)")
+    client.ensure_authenticated()
+    log_verbose(verbose, "Connecté à Garmin Connect")
     return client
 
 
 def get_existing_garmin_dates(client, start_date, end_date):
     data = client.get_weigh_ins(start_date.isoformat(), end_date.isoformat())
-    return {item["summaryDate"] for item in data.get("dailyWeightSummaries", [])}
+    return {item["summaryDate"] for item in data.get("dailyWeightSummaries", []) if item.get("summaryDate")}
 
 
 def sync_weights(args):
@@ -137,8 +138,7 @@ def sync_weights(args):
             log_verbose(args.verbose, f"Dry-run {row['date']} ({row['weightKg']} kg)")
             continue
 
-        dt = datetime.fromtimestamp(row["timestamp"])
-        garmin.add_weigh_in(row["weightKg"], "kg", dt.isoformat())
+        garmin.add_weigh_in(row["weightKg"], "kg", row["date"])
         imported.append(row)
         log_verbose(args.verbose, f"Import {row['date']} ({row['weightKg']} kg)")
 
