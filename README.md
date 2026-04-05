@@ -4,10 +4,25 @@ Synchronise automatiquement les pesées Withings vers Garmin Connect.
 
 Le projet est autonome : tous les fichiers nécessaires sont dans ce dossier.
 
+## Architecture
+
+```
+run_withings_garmin_sync.sh
+        │
+        ▼
+sync_withings_to_garmin.py
+        │
+        ├── withings_mcp.py  → API Withings (récupère les pesées via OAuth)
+        │
+        └── garmin_auth.py   → API Garmin Connect (lit/écrit les pesées)
+```
+
+`garmin_auth.py` implémente le flow OAuth1/OAuth2 de Garmin nativement, sans dépendance tierce pour l'auth. Les tokens sont mis en cache dans `~/.garmin-mcp/` (compatible avec `nicolasvegam/garmin-connect-mcp` si utilisé par ailleurs). Le rafraîchissement OAuth2 via OAuth1 ne passe jamais par le SSO Garmin, ce qui évite les blocages Cloudflare/429.
+
 ## Dépendances
 
-- **Python 3** avec le paquet [`garminconnect`](https://github.com/cyberjunky/python-garminconnect)
-- Accès aux APIs Withings (OAuth) et Garmin Connect (email/password)
+- **Python 3** — stdlib uniquement pour l'auth Garmin, `requests` pour les appels HTTP
+- Accès aux APIs Withings (OAuth refresh token) et Garmin Connect (email/password)
 
 ```bash
 pip install -r requirements.txt
@@ -17,8 +32,9 @@ pip install -r requirements.txt
 
 | Fichier | Rôle |
 |---|---|
-| `sync_withings_to_garmin.py` | Compare Withings et Garmin, importe les jours manquants |
+| `sync_withings_to_garmin.py` | Orchestre la synchro : compare Withings et Garmin, importe les manquants |
 | `withings_mcp.py` | Récupère les pesées depuis l'API Withings |
+| `garmin_auth.py` | Authentification et appels directs à l'API Garmin Connect |
 | `run_withings_garmin_sync.sh` | Point d'entrée : charge l'env et lance la synchro |
 | `install_withings_garmin_launchagent.sh` | Installe l'automatisation macOS (LaunchAgent) |
 | `uninstall_withings_garmin_launchagent.sh` | Supprime le LaunchAgent |
@@ -63,7 +79,15 @@ GARMIN_EMAIL="ton@email.com"
 GARMIN_PASSWORD="ton_mot_de_passe"
 ```
 
-### 4. Installer l'automatisation macOS
+### 4. Premier login Garmin
+
+Au premier lancement, le script effectue un login SSO complet et met les tokens OAuth en cache dans `~/.garmin-mcp/`. Les runs suivants rafraîchissent le token OAuth2 sans repasser par le SSO.
+
+```bash
+./run_withings_garmin_sync.sh --dry-run --verbose
+```
+
+### 5. Installer l'automatisation macOS
 
 Installation par défaut à 08h00 :
 
@@ -76,12 +100,6 @@ Avec un horaire personnalisé :
 
 ```bash
 ./install_withings_garmin_launchagent.sh --hour 7 --minute 30
-```
-
-Sans chargement immédiat :
-
-```bash
-./install_withings_garmin_launchagent.sh --no-load
 ```
 
 Suppression :
@@ -139,5 +157,6 @@ Le dossier du projet **ne doit pas être dans `~/Documents`** — macOS restrein
 | Erreur | Cause probable | Solution |
 |---|---|---|
 | `can't open input file` | Projet dans `~/Documents`, restriction TCC | Déplacer hors de `~/Documents` |
-| `invalid refresh_token` | Token expiré ou fichier absent | Renouveler via OAuth Withings |
-| Erreur auth Garmin | Mauvais credentials | Vérifier `.withings_garmin_sync.env` |
+| `invalid refresh_token` | Token Withings expiré ou fichier absent | Renouveler via OAuth Withings |
+| `Login SSO échoué` | Mauvais credentials ou MFA activé sur le compte Garmin | Vérifier `.withings_garmin_sync.env` |
+| `429 / Cloudflare` | Trop de tentatives de login SSO | Attendre quelques heures ; ne se produit qu'au tout premier login |
