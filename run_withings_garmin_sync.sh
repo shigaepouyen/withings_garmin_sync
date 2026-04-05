@@ -14,4 +14,4 @@ fi
 mkdir -p "$LOG_DIR"
 
 cd "$SCRIPT_DIR"
-exec /usr/bin/env python3 "$SCRIPT_DIR/sync_withings_to_garmin.py" "$@"
+exec /usr/bin/python3 "$SCRIPT_DIR/sync_withings_to_garmin.py" "$@"
