@@ -1,3 +1,5 @@
+![Status: Stable](https://img.shields.io/badge/status-Stable-brightgreen)
+
 # Withings → Garmin Sync
 
 Synchronise automatiquement les pesées Withings vers Garmin Connect.
